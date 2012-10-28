@@ -1,0 +1,11 @@
+#!/bin/bash
+
+PAZCAL_DIR=/home/nickie/pazcal
+BIN_DIR=$PAZCAL_DIR/bin
+INCLUDE_DIR=$PAZCAL_DIR/include
+
+CC=`which colorgcc` || CC=gcc
+CFLAGS="-std=gnu99 -Wall -Wextra -Werror -I $INCLUDE_DIR -include pazcal.h"
+
+MAIN=`$BIN_DIR/pzcheck $*` \
+    && env CGCC_FORCE_COLOR=1 $CC -x c -DMAIN=$MAIN $CFLAGS $* -lm

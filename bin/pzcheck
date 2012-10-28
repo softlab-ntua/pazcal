@@ -1,0 +1,22 @@
+#!/bin/bash
+
+while [ "$1" != "" ]; do
+    case "$1" in
+        -o)
+            shift
+            shift
+            ;;
+        -*)
+            shift
+            ;;
+        *)
+            cat "$1" \
+                | grep PROGRAM \
+                | sed 's/.*PROGRAM[ \t]*\([A-Za-z0-9_]*\).*/\1/' \
+                | sed 's/^main$/__pazcal_main/'
+            shift
+            ;;
+    esac
+done
+
+exit 0
