@@ -44,6 +44,14 @@ typedef double REAL;
     exit(1);                                    \
   } while(0)
 
+#define __pazcal_SYSERROR(...) do {             \
+    fprintf(stderr, "Pazcal runtime error: ");  \
+    fprintf(stderr, __VA_ARGS__);               \
+    fprintf(stderr, "\n");                      \
+    perror(NULL);                               \
+    exit(1);                                    \
+  } while(0)
+
 
 // Generic argument counting machinery
 
@@ -68,7 +76,7 @@ enum __pazcal_printf_type {
   __pazcal_printf_unsigned_long_int,
   __pazcal_printf_float,
   __pazcal_printf_long_double
-};  
+};
 
 static inline void __pazcal_printf(enum __pazcal_printf_type t, ...)
 {
@@ -298,6 +306,21 @@ static inline void __pazcal_printf(enum __pazcal_printf_type t, ...)
   ({ __typeof__ (a) _a = (a);    \
      __typeof__ (b) _b = (b);    \
      _a > _b ? _a : _b; })
+
+
+// I/O redirection
+
+#define INPUT(filename) do {                                            \
+    if (freopen(filename, "rt", stdin) == NULL) {                       \
+      __pazcal_RTERROR("Cannot redirect stdin to %s", filename);      \
+      perror(NULL);                                                     \
+    }                                                                   \
+  } while(0);
+
+#define OUTPUT(filename) do {                                           \
+    if (freopen(filename, "wt", stdout) == NULL)                        \
+      __pazcal_SYSERROR("Cannot redirect stdout to %s", filename);    \
+  } while(0);
 
 
 #endif
