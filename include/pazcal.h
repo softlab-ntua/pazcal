@@ -37,20 +37,20 @@ typedef double REAL;
 
 // Runtime errors
 
-#define __pazcal_RTERROR(...) do {              \
-    fprintf(stderr, "Pazcal runtime error: ");  \
-    fprintf(stderr, __VA_ARGS__);               \
-    fprintf(stderr, "\n");                      \
-    exit(1);                                    \
-  } while(0)
+#define __pazcal_RTERROR(...) ({                        \
+      fprintf(stderr, "Pazcal runtime error: ");        \
+      fprintf(stderr, __VA_ARGS__);                     \
+      fprintf(stderr, "\n");                            \
+      exit(1);                                          \
+    })
 
-#define __pazcal_SYSERROR(...) do {             \
-    fprintf(stderr, "Pazcal runtime error: ");  \
-    fprintf(stderr, __VA_ARGS__);               \
-    fprintf(stderr, "\n");                      \
-    perror(NULL);                               \
-    exit(1);                                    \
-  } while(0)
+#define __pazcal_SYSERROR(...) ({                       \
+      fprintf(stderr, "Pazcal runtime error: ");        \
+      fprintf(stderr, __VA_ARGS__);                     \
+      fprintf(stderr, "\n");                            \
+      perror(NULL);                                     \
+      exit(1);                                          \
+    })
 
 
 // Generic argument counting machinery
@@ -75,90 +75,162 @@ enum __pazcal_printf_type {
   __pazcal_printf_long_int,
   __pazcal_printf_unsigned_long_int,
   __pazcal_printf_float,
-  __pazcal_printf_long_double
+  __pazcal_printf_long_double,
+  __pazcal_printf_format
 };
+
+const char * __pazcal_printf_fmt[] = {
+  "s",       // string
+  "s",       // bool
+  "d",       // int
+  "lf",      // double
+  "c",       // char
+  "u",       // unsigned int
+  "ld",      // long int
+  "lu",      // unsigned long int
+  "lf",      // float
+  "Lf",      // long double
+  "<FORMAT>" // this should never be printed
+};
+
+typedef enum {
+  __pazcal_format_NONE,
+  __pazcal_format_VERBATIM,
+  __pazcal_format_FORM2,
+  __pazcal_format_FORM3
+} __pazcal_format_enum;
+
+typedef struct {
+  __pazcal_format_enum kind;
+  const char *fmt;
+  int width, precision;
+} __pazcal_format_struct;
+
+#define FMT(fmt, a)                                                     \
+  ((__pazcal_format_struct) {__pazcal_format_VERBATIM, (fmt), 0, 0}), (a)
+
+#define __pazcal_FORM_2(a, w)                                           \
+  ((__pazcal_format_struct) {__pazcal_format_FORM2, NULL, (w), 0}), (a)
+#define __pazcal_FORM_3(a, w, p)                                        \
+  ((__pazcal_format_struct) {__pazcal_format_FORM3, NULL, (w), (p)}), (a)
+
+#define FORM(...) \
+  __pazcal_CAT(__pazcal_FORM_, __pazcal_COUNT_ARG(__VA_ARGS__))(__VA_ARGS__)
 
 static inline void __pazcal_printf(enum __pazcal_printf_type t, ...)
 {
+  static __pazcal_format_struct spec = {__pazcal_format_NONE, NULL, 0, 0};
   va_list arg;
   va_start(arg, t);
 
-  switch (t) {
-  case __pazcal_printf_string:
-    printf("%s", va_arg(arg, char *));
-    break;
-  case __pazcal_printf_bool:
-    printf("%s", va_arg(arg, int) ? "true" : "false");
-    break;
-  case __pazcal_printf_int:
-    printf("%d", va_arg(arg, int));
-    break;
-  case __pazcal_printf_double:
-    printf("%lf", va_arg(arg, double) ? : 0.0);
-    break;
-  case __pazcal_printf_char:
-    printf("%c", (char) va_arg(arg, int));
-    break;
-  case __pazcal_printf_unsigned_int:
-    printf("%u", va_arg(arg, unsigned int));
-    break;
-  case __pazcal_printf_long_int:
-    printf("%ld", va_arg(arg, long int));
-    break;
-  case __pazcal_printf_unsigned_long_int:
-    printf("%lu", va_arg(arg, unsigned long int));
-    break;
-  case __pazcal_printf_float:
-    printf("%lf", va_arg(arg, double) ? : 0.0);
-    break;
-  case __pazcal_printf_long_double:
-    printf("%Lf", va_arg(arg, long double) ? : 0.0l);
-    break;
+  if (t == __pazcal_printf_format)
+    spec = va_arg(arg, __pazcal_format_struct);
+  else {
+    char fmt[32];
+    switch (spec.kind) {
+    case __pazcal_format_NONE:
+      sprintf(fmt, "%%%s", __pazcal_printf_fmt[t]);
+      break;
+    case __pazcal_format_VERBATIM:
+      strncpy(fmt, spec.fmt, sizeof(fmt)-1);
+      break;
+    case __pazcal_format_FORM2:
+      if (spec.width < 0)
+        __pazcal_RTERROR("negative width for WRITE format");
+      sprintf(fmt, "%%%d%s", spec.width, __pazcal_printf_fmt[t]);
+      break;
+    case __pazcal_format_FORM3:
+      if (spec.width < 0)
+        __pazcal_RTERROR("negative width for WRITE format");
+      if (spec.precision < 0)
+        __pazcal_RTERROR("negative precision for WRITE format");
+      sprintf(fmt, "%%%d.%d%s", spec.width, spec.precision,
+              __pazcal_printf_fmt[t]);
+      break;
+    }
+
+    switch (t) {
+    case __pazcal_printf_string:
+      printf(fmt, va_arg(arg, char *));
+      break;
+    case __pazcal_printf_bool:
+      printf(fmt, va_arg(arg, int) ? "true" : "false");
+      break;
+    case __pazcal_printf_int:
+      printf(fmt, va_arg(arg, int));
+      break;
+    case __pazcal_printf_double:
+      printf(fmt, va_arg(arg, double) ? : 0.0);
+      break;
+    case __pazcal_printf_char:
+      printf(fmt, (char) va_arg(arg, int));
+      break;
+    case __pazcal_printf_unsigned_int:
+      printf(fmt, va_arg(arg, unsigned int));
+      break;
+    case __pazcal_printf_long_int:
+      printf(fmt, va_arg(arg, long int));
+      break;
+    case __pazcal_printf_unsigned_long_int:
+      printf(fmt, va_arg(arg, unsigned long int));
+      break;
+    case __pazcal_printf_float:
+      printf(fmt, va_arg(arg, double) ? : 0.0);
+      break;
+    case __pazcal_printf_long_double:
+      printf(fmt, va_arg(arg, long double) ? : 0.0l);
+      break;
+    default:
+      __pazcal_RTERROR("invalid use of __pazcal_printf");
+    }
   }
   va_end(arg);
 }
 
-#define __pazcal_WRITE(a) do {                                          \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), char*),                 \
-    __pazcal_printf(__pazcal_printf_string, a),                         \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), const char*),           \
-    __pazcal_printf(__pazcal_printf_string, a),                         \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), char[]),                \
-    __pazcal_printf(__pazcal_printf_string, a),                         \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), const char[]),          \
-    __pazcal_printf(__pazcal_printf_string, a),                         \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), bool),                  \
-    __pazcal_printf(__pazcal_printf_bool, a),                           \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), int),                   \
-    __pazcal_printf(__pazcal_printf_int, a),                            \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), double),                \
-    __pazcal_printf(__pazcal_printf_double, a),                         \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), char),                  \
-    __pazcal_printf(__pazcal_printf_char, a),                           \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), unsigned int),          \
-    __pazcal_printf(__pazcal_printf_unsigned_int, a),                   \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), long int),              \
-    __pazcal_printf(__pazcal_printf_long_int, a),                       \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), unsigned long int),     \
-    __pazcal_printf(__pazcal_printf_unsigned_long_int, a),              \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), float),                 \
-    __pazcal_printf(__pazcal_printf_float, a),                          \
-  __builtin_choose_expr(                                                \
-    __builtin_types_compatible_p(__typeof__(a), long double),           \
-    __pazcal_printf(__pazcal_printf_long_double, a),                    \
-    printf("<cannot WRITE argument %s>", #a))))))))))))));              \
+#define __pazcal_WRITE(a) do {                                           \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), char*),                  \
+    __pazcal_printf(__pazcal_printf_string, a),                          \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), const char*),            \
+    __pazcal_printf(__pazcal_printf_string, a),                          \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), char[]),                 \
+    __pazcal_printf(__pazcal_printf_string, a),                          \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), const char[]),           \
+    __pazcal_printf(__pazcal_printf_string, a),                          \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), bool),                   \
+    __pazcal_printf(__pazcal_printf_bool, a),                            \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), int),                    \
+    __pazcal_printf(__pazcal_printf_int, a),                             \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), double),                 \
+    __pazcal_printf(__pazcal_printf_double, a),                          \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), char),                   \
+    __pazcal_printf(__pazcal_printf_char, a),                            \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), unsigned int),           \
+    __pazcal_printf(__pazcal_printf_unsigned_int, a),                    \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), long int),               \
+    __pazcal_printf(__pazcal_printf_long_int, a),                        \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), unsigned long int),      \
+    __pazcal_printf(__pazcal_printf_unsigned_long_int, a),               \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), float),                  \
+    __pazcal_printf(__pazcal_printf_float, a),                           \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), long double),            \
+    __pazcal_printf(__pazcal_printf_long_double, a),                     \
+  __builtin_choose_expr(                                                 \
+    __builtin_types_compatible_p(__typeof__(a), __pazcal_format_struct), \
+    __pazcal_printf(__pazcal_printf_format, a),                          \
+    printf("<cannot WRITE argument %s>", #a)))))))))))))));              \
   } while(0)
 
 #define __pazcal_WRITE_0() \
@@ -263,15 +335,16 @@ static inline void __pazcal_printf(enum __pazcal_printf_type t, ...)
 
 #define __pazcal_FOR_4(var, start, sign, stop)  \
   __pazcal_FOR_5(var, start, sign, stop, 1)
-#define __pazcal_FOR_5(var, start, sign, stop, step)    \
-  for (__typeof__(((stop) - (start)) / (step))          \
-         __the_var  = (start),                          \
-         __the_stop = (stop),                           \
-         __the_step = (sign) * (step);                  \
-       ((var) = __the_var,                              \
-        (var) = (var),                                  \
-        (__the_step >= 0 ? __the_var <= __the_stop      \
-                         : __the_var >= __the_stop));   \
+#define __pazcal_FOR_5(var, start, sign, stop, step)                    \
+  for (__typeof__(((stop) - (start)) / (step))                          \
+         __the_var  = (start),                                          \
+         __the_stop = (stop),                                           \
+         __the_step = (sign) * ((step) ? :                              \
+           (__pazcal_RTERROR("zero step in FOR loop "), 1));            \
+       ((var) = __the_var,                                              \
+        (var) = (var),                                                  \
+        (__the_step >= 0 ? __the_var <= __the_stop                      \
+                         : __the_var >= __the_stop));                   \
        __the_var += __the_step)
 
 #define FOR(...) \
