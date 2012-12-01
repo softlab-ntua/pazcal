@@ -1,10 +1,11 @@
 #!/bin/bash
 
+
 PAZCAL_DIR=/home/nickie/pazcal
 BIN_DIR=$PAZCAL_DIR/bin
 INCLUDE_DIR=$PAZCAL_DIR/include
 
-CC=`which colorgcc` || CC=gcc
+CC=`which colorgcc 2> /dev/null` || CC=gcc
 CFLAGS="-std=gnu99 -Wall -Wextra -Werror -I $INCLUDE_DIR -include pazcal.h"
 
 MAIN=`$BIN_DIR/pzcheck $*` \
