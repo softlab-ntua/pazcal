@@ -385,15 +385,32 @@ static inline void __pazcal_printf(enum __pazcal_printf_type t, ...)
 
 #define INPUT(filename) do {                                            \
     if (freopen(filename, "rt", stdin) == NULL) {                       \
-      __pazcal_RTERROR("Cannot redirect stdin to %s", filename);      \
+      __pazcal_RTERROR("Cannot redirect stdin to %s", filename);        \
       perror(NULL);                                                     \
     }                                                                   \
   } while(0);
 
 #define OUTPUT(filename) do {                                           \
     if (freopen(filename, "wt", stdout) == NULL)                        \
-      __pazcal_SYSERROR("Cannot redirect stdout to %s", filename);    \
+      __pazcal_SYSERROR("Cannot redirect stdout to %s", filename);      \
   } while(0);
 
+
+// Dynamic memory management
+
+#define __pazcal_NEW_1(type)                    \
+  __pazcal_NEW_2(type, 1)
+#define __pazcal_NEW_2(type, n)                                         \
+  ({ typeof(type) *__p =                                                \
+       (typeof(type) *) malloc((n) * sizeof(typeof(type)));             \
+     if (__p == NULL)                                                   \
+       __pazcal_RTERROR("READ_INT found no valid integer number");      \
+     __p;                                                               \
+  })
+
+#define NEW(...) \
+  __pazcal_CAT(__pazcal_NEW_, __pazcal_COUNT_ARG(__VA_ARGS__))(__VA_ARGS__)
+
+#define DELETE(p) free(p)
 
 #endif
