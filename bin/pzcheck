@@ -12,7 +12,7 @@ while [ "$1" != "" ]; do
         *)
             cat "$1" \
                 | grep PROGRAM \
-                | sed 's/.*PROGRAM[ \t]*\([A-Za-z0-9_]*\).*/\1/' \
+                | sed 's/.*PROGRAM[[:blank:]]*\([A-Za-z0-9_]*\).*/\1/' \
                 | sed 's/^main$/__pazcal_main/'
             shift
             ;;
