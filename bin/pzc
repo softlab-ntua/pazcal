@@ -1,12 +1,27 @@
 #!/bin/bash
 
-
 PAZCAL_DIR=/home/nickie/pazcal
+#PAZCAL_DIR=/Users/nickie/Documents/pazcal
+
 BIN_DIR=$PAZCAL_DIR/bin
 INCLUDE_DIR=$PAZCAL_DIR/include
 
 CC=`which colorgcc 2> /dev/null` || CC=gcc
-CFLAGS="-std=gnu99 -Wall -Wextra -Werror -I $INCLUDE_DIR -include pazcal.h"
+ALLOW="-Wno-dangling-else -Wno-sign-compare"
+CFLAGS="-std=gnu99 -Wall -Wextra -Werror $ALLOW -I $INCLUDE_DIR -include pazcal.h"
 
-MAIN=`$BIN_DIR/pzcheck $*` \
-    && env CGCC_FORCE_COLOR=1 $CC -x c -DMAIN=$MAIN $CFLAGS $* -lm
+mktemp=`which mktemp`
+if [ $? -eq 0 ]; then
+    pzpdir=`$mktemp -d ${TMPDIR:-/tmp}/pzc.XXXXXXXX`
+else
+    pzpdir=${TMPDIR:-/tmp}/pzc.$RANDOM.$RANDOM.$RANDOM
+    (umask 077 && mkdir $pzpdir)
+fi
+
+TMPDIR=$pzpdir ARGS=`$BIN_DIR/pzcheck $*` && \
+    env CGCC_FORCE_COLOR=1 $CC $CFLAGS $ARGS -lm
+result=$?
+
+rm -fr $pzpdir
+
+exit $result

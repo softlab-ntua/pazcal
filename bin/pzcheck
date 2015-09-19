@@ -1,22 +1,23 @@
 #!/bin/bash
 
+RESULT=""
+
 while [ "$1" != "" ]; do
     case "$1" in
-        -o)
-            shift
-            shift
-            ;;
-        -*)
+        *.pzc)
+            prog=`basename "$1" .pzc`
+            cat "$1" \
+                | sed 's/^[[:blank:]]*PROGRAM[[:blank:]][[:blank:]]*[A-Za-z0-9_]*[[:blank:]]*([[:blank:]]*)/PROGRAM __pazcal__program ()/g' \
+                > "$TMPDIR/$prog.c"
+            RESULT="$RESULT $TMPDIR/$prog.c"
             shift
             ;;
         *)
-            cat "$1" \
-                | grep PROGRAM \
-                | sed 's/.*PROGRAM[[:blank:]]*\([A-Za-z0-9_]*\).*/\1/' \
-                | sed 's/^main$/__pazcal_main/'
+            RESULT="$RESULT $1"
             shift
             ;;
     esac
 done
 
+printf "%s\n" "$RESULT"
 exit 0

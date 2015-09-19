@@ -10,7 +10,7 @@ to first-year students of the
 at the
 [National Technical University of Athens](http://www.ntua.gr/).
 It comes with a set of notes, written by
-[Stathis Zachos](http://www.ece.ntua.gr/index.php?option=com_dep&task=profile&id=7&Itemid=62) and
+[Stathis Zachos](http://www.corelab.ece.ntua.gr/~zachos/) and
 [Nikos Papaspyrou](http://www.softlab.ntua.gr/~nickie/),
 which will eventually be added to this repository.
 

@@ -311,6 +311,14 @@ static inline void __pazcal_printf(enum __pazcal_printf_type t, ...)
         __pazcal_RTERROR("READ_REAL found no valid real number");       \
       __r; })
 
+#define READ_STRING(n, s) ({ int __i = 0, __n = (n); char * __s = s;    \
+      while (__i < __n) {                                               \
+        int c = (__i+1 < n) ? getchar() : '\0';                         \
+        if (c == '\n' || c == EOF) { *__s++ = '\0'; break; }            \
+        *__s++ = c; __i++;                                              \
+      }                                                                 \
+      __s; })
+
 #define SKIP_LINE() do {                        \
     int c = getchar();                          \
     if (c == '\n' || c == EOF) break;           \
@@ -319,12 +327,12 @@ static inline void __pazcal_printf(enum __pazcal_printf_type t, ...)
 
 // Program and procedures
 
-#define PROGRAM                                 \
-  int main () {                                 \
-    void MAIN();                                \
-    MAIN();                                     \
-    return 0;                                   \
-  }                                             \
+#define PROGRAM                                         \
+  int main () {                                         \
+    void __pazcal__program();                           \
+    __pazcal__program();                                \
+    return 0;                                           \
+  }                                                     \
   void
 
 #define PROC void
