@@ -1,14 +1,14 @@
 #!/bin/bash
 
-PAZCAL_DIR=/home/nickie/pazcal
-#PAZCAL_DIR=/Users/nickie/Documents/pazcal
+PAZCAL_DIR=$HOME/pazcal
+#PAZCAL_DIR=$HOME/Documents/pazcal
 
 BIN_DIR=$PAZCAL_DIR/bin
 INCLUDE_DIR=$PAZCAL_DIR/include
 
-CC=`which colorgcc 2> /dev/null` || CC=gcc
-ALLOW="-Wno-dangling-else -Wno-sign-compare"
-CFLAGS="-std=gnu99 -Wall -Wextra -Werror $ALLOW -I $INCLUDE_DIR -include pazcal.h"
+CXX=`which colorg++ 2> /dev/null` || CXX=g++
+ALLOW="-Wno-dangling-else -Wno-sign-compare -Wno-writable-strings"
+CXXFLAGS="-std=gnu++11 -Wall -Wextra -Werror $ALLOW -I $INCLUDE_DIR -include pazcal"
 
 mktemp=`which mktemp`
 if [ $? -eq 0 ]; then
@@ -19,9 +19,9 @@ else
 fi
 
 TMPDIR=$pzpdir ARGS=`$BIN_DIR/pzcheck $*` && \
-    env CGCC_FORCE_COLOR=1 $CC $CFLAGS $ARGS -lm
+    env CGCC_FORCE_COLOR=1 $CXX $CXXFLAGS $ARGS
 result=$?
 
-rm -fr $pzpdir
+#rm -fr $pzpdir
 
 exit $result

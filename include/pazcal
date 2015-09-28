@@ -1,0 +1,303 @@
+// Pazcal: An educational subset of -*- C++ -*-
+
+#ifndef __PAZCAL__
+#define __PAZCAL__
+
+
+// Standard header files
+
+#include <cstdarg>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cfloat>
+#include <cmath>
+
+#include <limits>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
+
+// Expose the standard namespace
+
+using namespace std;
+
+
+// Type for REAL numbers
+
+typedef double REAL;
+
+#define REAL_MANT_DIG   (numeric_limits<REAL>::digits())
+#define REAL_DIG        (numeric_limits<REAL>::digits10())
+#define REAL_MIN_EXP    (numeric_limits<REAL>::min_exponent())
+#define REAL_MIN_10_EXP (numeric_limits<REAL>::min_exponent10())
+#define REAL_MAX_EXP    (numeric_limits<REAL>::max_exponent())
+#define REAL_MAX_10_EXP (numeric_limits<REAL>::max_exponent10())
+#define REAL_MIN        (numeric_limits<REAL>::min())
+#define REAL_MAX        (numeric_limits<REAL>::max())
+#define REAL_EPSILON    (numeric_limits<REAL>::epsilon())
+
+
+// Runtime errors and messages
+
+#define __pazcal_ERROR(...) __pazcal_runtime(__pazcal_error_normal, __VA_ARGS__)
+#define __pazcal_FATAL(...) __pazcal_runtime(__pazcal_error_fatal, __VA_ARGS__)
+#define __pazcal_SYSTEM(...) __pazcal_runtime(__pazcal_error_system, __VA_ARGS__)
+
+enum __pazcal_error_type {
+  __pazcal_error_normal,
+  __pazcal_error_fatal,
+  __pazcal_error_system
+};
+
+template<typename T>
+inline void __pazcal_error (T const& a)
+{
+  cerr << a;
+}
+
+template<>
+inline void __pazcal_error<bool> (bool const& a)
+{
+  cerr << (a ? "true" : "false");
+}
+
+template<typename TF, typename ... TR>
+inline void __pazcal_error (TF const& first, TR const& ... rest)
+{
+  __pazcal_error(first);
+  __pazcal_error(rest...);
+}
+
+template<typename ... TR>
+inline void __pazcal_runtime (__pazcal_error_type t, TR const& ... args) {
+  if (t == __pazcal_error_system) perror(NULL);
+  cerr << "Pazcal runtime error: ";
+  __pazcal_error(args...);
+  cerr << '\n';
+  if (t == __pazcal_error_fatal) exit(1);
+}
+
+
+// Generic argument counting machinery
+
+#define __pazcal_CAT(A, B) __pazcal_CAT2(A, B)
+#define __pazcal_CAT2(A, B) A ## B
+
+#define __pazcal_COUNT_ARG(...) \
+  __pazcal_COUNT_AUX(42, ## __VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#define __pazcal_COUNT_AUX(_, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, n, ...) n
+
+
+// WRITE set of macros
+
+#define WRITE __pazcal_write
+#define WRITELN __pazcal_write_ln
+
+template<typename T>
+inline void __pazcal_write (T const& a)
+{
+  cout << a;
+}
+
+template<>
+inline void __pazcal_write<bool> (bool const& a)
+{
+  cout << (a ? "true" : "false");
+}
+
+template<typename T>
+inline void __pazcal_write_sep (T const& a)
+{
+  cout << ' ';
+  __pazcal_write(a);
+}
+
+template<typename TF, typename ... TR>
+inline void __pazcal_write_sep (TF const& first, TR const& ... rest)
+{
+  __pazcal_write_sep(first);
+  __pazcal_write_sep(rest...);
+}
+
+template<typename TF, typename ... TR>
+inline void __pazcal_write (TF const& first, TR const& ... rest)
+{
+  __pazcal_write(first);
+  __pazcal_write_sep(rest...);
+}
+
+inline void __pazcal_write () {}
+
+template<typename ... TR>
+inline void __pazcal_write_ln (TR const& ... args)
+{
+  __pazcal_write(args...);
+  cout << '\n';
+}
+
+template<typename T>
+class __pazcal_format
+{
+protected:
+  T const& value;
+  streamsize width, precision;
+
+public:
+  explicit __pazcal_format (T const& a, int w, int p) :
+    value(a), width(w), precision(p) {}
+
+  template<typename TX>
+  friend
+  inline ostream & operator << (ostream & out, const __pazcal_format<TX> &f)
+  {
+    streamsize old_width = out.width(f.width);
+    streamsize old_precision = out.precision(f.precision);
+    ios_base::fmtflags old_flags = out.flags(ios_base::fixed);
+    ostream & result = out << f.value;
+    out.width(old_width);
+    out.precision(old_precision);
+    out.setf(old_flags);
+    return result;
+  }
+};
+
+template<typename T>
+inline __pazcal_format<T> FORM (T const& a, int w)
+{
+  return __pazcal_format<T>(a, w, 0);
+}
+
+template<typename T>
+inline __pazcal_format<T> FORM (T const& a, int w, int p)
+{
+  return __pazcal_format<T>(a, w, p);
+}
+
+
+// READ set of functions
+
+inline int READ_INT ()
+{
+  int result;
+  cin >> result;
+  return result;
+}
+
+inline REAL READ_REAL ()
+{
+  REAL result;
+  cin >> result;
+  return result;
+}
+
+inline char* READ_STRING (size_t n, char *s)
+{
+  cin.getline(s, n);
+  return s;
+}
+
+inline void SKIP_LINE ()
+{
+  do {
+    int c = cin.get();
+    if (c == '\n' || c == EOF) break;
+  } while(1);
+}
+
+
+// Program and procedures
+
+#define PROGRAM                                         \
+  int main () {                                         \
+    void __pazcal__program();                           \
+    __pazcal__program();                                \
+    return 0;                                           \
+  }                                                     \
+  void
+
+#define PROC void
+#define FUNC
+
+
+// FOR loops
+
+#define __pazcal_FOR_4(var, start, sign, stop)  \
+  __pazcal_FOR_5(var, start, sign, stop, 1)
+#define __pazcal_FOR_5(var, start, sign, stop, step)                    \
+  for (__typeof__(((stop) - (start)) / (step))                          \
+         __the_var  = (start),                                          \
+         __the_stop = (stop),                                           \
+         __the_step = (sign) * ((step) ? :                              \
+           (__pazcal_FATAL("zero step in FOR loop"), 1));               \
+       ((var) = __the_var,                                              \
+        (var) = (var),                                                  \
+        (__the_step >= 0 ? __the_var <= __the_stop                      \
+                         : __the_var >= __the_stop));                   \
+       __the_var += __the_step)
+
+#define FOR(...) \
+  __pazcal_CAT(__pazcal_FOR_, __pazcal_COUNT_ARG(__VA_ARGS__))(__VA_ARGS__)
+
+#define TO     , +1 ,
+#define DOWNTO , -1 ,
+#define STEP   ,
+
+
+// Switch
+
+#define NEXT do {} while(0)
+
+
+// Aliases for operators
+
+#define MOD %
+#define AND &&
+#define OR  ||
+#define NOT !
+
+
+// I/O redirection
+
+#define INPUT(filename) do {                                            \
+    if (freopen(filename, "rt", stdin) == NULL) {                       \
+      __pazcal_SYSTEM("Cannot redirect stdin to %s", filename);         \
+      perror(NULL);                                                     \
+    }                                                                   \
+  } while(0);
+
+#define OUTPUT(filename) do {                                           \
+    if (freopen(filename, "wt", stdout) == NULL)                        \
+      __pazcal_SYSTEM("Cannot redirect stdout to %s", filename);        \
+  } while(0);
+
+/*
+  std::ifstream in("in.txt");
+  std::streambuf *cinbuf = std::cin.rdbuf(); //save old buf
+  std::cin.rdbuf(in.rdbuf()); //redirect std::cin to in.txt!
+
+  std::ofstream out("out.txt");
+  std::streambuf *coutbuf = std::cout.rdbuf(); //save old buf
+  std::cout.rdbuf(out.rdbuf()); //redirect std::cout to out.txt!
+ */
+
+// Dynamic memory management
+
+#define __pazcal_NEW_1(type)                    \
+  __pazcal_NEW_2(type, 1)
+#define __pazcal_NEW_2(type, n)                                         \
+  ({ typeof(type) *__p =                                                \
+       (typeof(type) *) malloc((n) * sizeof(typeof(type)));             \
+     if (__p == NULL)                                                   \
+       __pazcal_FATAL("Out of memory");                                 \
+     __p;                                                               \
+  })
+
+#define NEW(...) \
+  __pazcal_CAT(__pazcal_NEW_, __pazcal_COUNT_ARG(__VA_ARGS__))(__VA_ARGS__)
+
+#define DELETE(p) free(p)
+
+#endif
