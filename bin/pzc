@@ -18,10 +18,12 @@ else
     (umask 077 && mkdir $pzpdir)
 fi
 
-TMPDIR=$pzpdir ARGS=`$BIN_DIR/pzcheck $*` && \
+ARGS="`env TMPDIR=$pzpdir $BIN_DIR/pzcheck $*`"
+if [ $? -eq 0 ]; then
     env CGCC_FORCE_COLOR=1 $CXX $CXXFLAGS $ARGS
+fi
 result=$?
 
-#rm -fr $pzpdir
+rm -fr $pzpdir
 
 exit $result
