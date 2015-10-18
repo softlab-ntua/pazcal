@@ -129,7 +129,7 @@ template<typename T>
 inline void __pazcal_write_sep (T const& a)
 {
   putchar(' ');
-  __pazcal_write_fmt(a, 0, 0);
+  __pazcal_write_fmt(a, 0, 6);
 }
 
 template<typename TF, typename ... TR>
@@ -144,13 +144,13 @@ inline void __pazcal_write () {}
 template<typename T>
 inline void __pazcal_write (T const& a)
 {
-  __pazcal_write_fmt(a, 0, 0);
+  __pazcal_write_fmt(a, 0, 6);
 }
 
 template<typename TF, typename ... TR>
 inline void __pazcal_write (TF const& first, TR const& ... rest)
 {
-  __pazcal_write_fmt(first, 0, 0);
+  __pazcal_write_fmt(first, 0, 6);
   __pazcal_write_sep(rest...);
 }
 
