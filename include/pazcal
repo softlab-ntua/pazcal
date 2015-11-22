@@ -316,19 +316,12 @@ inline void OUTPUT (const char *filename)
 
 // Dynamic memory management
 
-#define __pazcal_NEW_1(type)                    \
-  __pazcal_NEW_2(type, 1)
-#define __pazcal_NEW_2(type, n)                                         \
-  ({ typeof(type) *__p =                                                \
-       (typeof(type) *) malloc((n) * sizeof(typeof(type)));             \
-     if (__p == NULL)                                                   \
-       __pazcal_FATAL("Out of memory");                                 \
-     __p;                                                               \
-  })
+#define __pazcal_NEW_1(type)    __pazcal_NEW_2(type, 1)
+#define __pazcal_NEW_2(type, n) (new type [n])
 
 #define NEW(...) \
   __pazcal_CAT(__pazcal_NEW_, __pazcal_COUNT_ARG(__VA_ARGS__))(__VA_ARGS__)
 
-#define DELETE(p) free(p)
+#define DELETE(p) do { delete [] (p); } while(0)
 
 #endif
