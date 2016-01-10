@@ -110,6 +110,16 @@ inline void __pazcal_write_fmt (unsigned long a, int w, int)
   printf("%*lu", w, a);
 }
 
+inline void __pazcal_write_fmt (long long int a, int w, int)
+{
+  printf("%*lld", w, a);
+}
+
+inline void __pazcal_write_fmt (unsigned long long a, int w, int)
+{
+  printf("%*llu", w, a);
+}
+
 inline void __pazcal_write_fmt (float a, int w, int p)
 {
   printf("%*.*f", w, p, a);
