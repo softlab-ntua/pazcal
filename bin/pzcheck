@@ -7,7 +7,7 @@ while [ "$1" != "" ]; do
         *.pzc)
             prog=`basename "$1" .pzc`
             cat "$1" \
-                | sed 's/^[[:blank:]]*PROGRAM[[:blank:]][[:blank:]]*[A-Za-z0-9_]*[[:blank:]]*([[:blank:]]*)/PROGRAM __pazcal__program ()/g' \
+                | sed -E 's/^[[:blank:]]*PROGRAM[[:blank:]]+[A-Za-z0-9_]+[[:blank:]]*\([[:blank:]]*\)/PROGRAM __pazcal__program ()/' \
                 > "$TMPDIR/$prog.cpp"
             RESULT="$RESULT $TMPDIR/$prog.cpp"
             shift
