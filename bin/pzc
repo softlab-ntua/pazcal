@@ -1,10 +1,8 @@
 #!/bin/bash
 
-PAZCAL_DIR=$HOME/pazcal
-#PAZCAL_DIR=$HOME/Documents/pazcal
-
-BIN_DIR=$PAZCAL_DIR/bin
-INCLUDE_DIR=$PAZCAL_DIR/include
+PZC=`realpath $0`
+BIN_DIR=`dirname $PZC`
+INCLUDE_DIR=`realpath $BIN_DIR/../include`
 
 CXX=`which colorg++ 2> /dev/null` || CXX=g++
 ALLOW="-Wno-dangling-else -Wno-sign-compare -Wno-writable-strings"
